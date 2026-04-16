@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Assistant",
+  "version": "1.0.0",
+  "description": "Your personal assistant for bookmarks and productivity",
+  "icons": {
+    "16": "src/assets/icon16.png",
+    "48": "src/assets/icon48.png",
+    "128": "src/assets/icon128.png"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "src/assets/icon16.png",
+      "48": "src/assets/icon48.png",
+      "128": "src/assets/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.tsx"],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": ["storage", "activeTab", "tabs", "alarms"],
+  "host_permissions": ["http://localhost:3000/*", "https://localhost:3000/*"]
+}
