@@ -94,7 +94,8 @@ export type MessageType =
   | "GET_BOOKMARK_STATUS"
   | "ADD_BOOKMARK_FROM_CONTENT"
   | "SYNC_BOOKMARKS"
-  | "GET_PASSCODE_LOCK_STATUS";
+  | "GET_PASSCODE_LOCK_STATUS"
+  | "VERIFY_PASSCODE";
 
 export interface Message<T = unknown> {
   type: MessageType;

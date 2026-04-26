@@ -31,6 +31,12 @@ const FloatingButton: React.FC = () => {
   const [passcode, setPasscode] = useState("");
   const [passError, setPassError] = useState("");
 
+  // lock feature state
+  const [isPageLocked, setIsPageLocked] = useState(false);
+  const [lockInput, setLockInput] = useState("");
+  const [lockError, setLockError] = useState("");
+  const [lockLoading, setLockLoading] = useState(false);
+
   // drag
   const [pos, setPos] = useState({
     x: window.innerWidth - FAB - 16,
@@ -98,6 +104,15 @@ const FloatingButton: React.FC = () => {
     }
   };
 
+  // ── Lock page ─────────────────────────────────────────────────────────────
+  const lockPage = () => {
+    setMenuOpen(false);
+    setActiveFeature(null);
+    setLockInput("");
+    setLockError("");
+    setIsPageLocked(true);
+  };
+
   // ── Open bookmark feature ─────────────────────────────────────────────────
   const openBookmark = async () => {
     setMenuOpen(false);
@@ -117,6 +132,33 @@ const FloatingButton: React.FC = () => {
       }
       setLoadingHistory(false);
     }
+  };
+
+  // ── Verify passcode and unlock page ─────────────────────────────────────
+  const handleUnlock = () => {
+    if (!lockInput.trim()) {
+      setLockError("Please enter your passcode");
+      return;
+    }
+    setLockLoading(true);
+    setLockError("");
+    chrome.runtime.sendMessage(
+      { type: "VERIFY_PASSCODE", payload: { passcode: lockInput } },
+      (res: { success: boolean; error?: string }) => {
+        setLockLoading(false);
+        if (chrome.runtime.lastError || !res) {
+          setLockError("Failed to verify passcode");
+          return;
+        }
+        if (res.success) {
+          setIsPageLocked(false);
+          setLockInput("");
+        } else {
+          setLockError(res.error ?? "Incorrect passcode");
+          setLockInput("");
+        }
+      },
+    );
   };
 
   // ── Add bookmark ──────────────────────────────────────────────────────────
@@ -156,6 +198,51 @@ const FloatingButton: React.FC = () => {
 
   return (
     <>
+      {/* ── Sub-action: Lock ──────────────────────────────────────────────── */}
+      <button
+        onClick={lockPage}
+        title="Lock this page"
+        style={{
+          position: "fixed",
+          left: subLeft,
+          top: pos.y - 2 * (SUB + GAP),
+          zIndex: 2147483645,
+          width: SUB,
+          height: SUB,
+          borderRadius: "50%",
+          background: "#fff",
+          border: "none",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.13)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: menuOpen ? 1 : 0,
+          transform: menuOpen
+            ? "scale(1) translateY(0)"
+            : "scale(0.5) translateY(20px)",
+          transition: "opacity 0.2s 0.1s, transform 0.2s 0.1s",
+          pointerEvents: menuOpen ? "auto" : "none",
+          userSelect: "none",
+        }}
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" fill="#6366f1" />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+            stroke="#6366f1"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+
       {/* ── Sub-action: Bookmark ───────────────────────────────────────────── */}
       <button
         onClick={openBookmark}
@@ -164,7 +251,7 @@ const FloatingButton: React.FC = () => {
           position: "fixed",
           left: subLeft,
           top: pos.y - SUB - GAP,
-          zIndex: 2147483646,
+          zIndex: 2147483645,
           width: SUB,
           height: SUB,
           borderRadius: "50%",
@@ -204,7 +291,7 @@ const FloatingButton: React.FC = () => {
           position: "fixed",
           left: pos.x,
           top: pos.y,
-          zIndex: 2147483647,
+          zIndex: 2147483646,
           width: FAB,
           height: FAB,
           borderRadius: "50%",
@@ -251,7 +338,7 @@ const FloatingButton: React.FC = () => {
             position: "fixed",
             bottom: 16,
             right: 16,
-            zIndex: 2147483645,
+            zIndex: 2147483644,
             width: 300,
             maxHeight: 450,
             borderRadius: 16,
@@ -508,6 +595,152 @@ const FloatingButton: React.FC = () => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Lock overlay ──────────────────────────────────────────────────── */}
+      {isPageLocked && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: 2147483647,
+            background: "#0d1520",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "'Inter', system-ui, sans-serif",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: 400, padding: "0 32px" }}>
+            {/* Icon */}
+            <div style={{ textAlign: "center", marginBottom: 28 }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 72,
+                  height: 72,
+                  borderRadius: "50%",
+                  background: "rgba(99,102,241,0.12)",
+                  border: "1px solid rgba(99,102,241,0.25)",
+                }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <rect
+                    x="3"
+                    y="11"
+                    width="18"
+                    height="11"
+                    rx="2"
+                    fill="#6366f1"
+                  />
+                  <path
+                    d="M7 11V7a5 5 0 0 1 10 0v4"
+                    stroke="#6366f1"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2
+              style={{
+                fontSize: 22,
+                fontWeight: 600,
+                color: "#f1f5f9",
+                margin: "0 0 8px",
+                textAlign: "center",
+              }}
+            >
+              Enter your{" "}
+              <span style={{ color: "#3b82f6" }}>local passcode</span>
+            </h2>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#475569",
+                textAlign: "center",
+                margin: "0 0 36px",
+              }}
+            >
+              This page is locked. Enter your passcode to view its content.
+            </p>
+
+            {/* Input */}
+            <div style={{ marginBottom: 8 }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 13,
+                  color: "#94a3b8",
+                  marginBottom: 8,
+                }}
+              >
+                Your passcode
+              </label>
+              <input
+                type="password"
+                value={lockInput}
+                onChange={(e) => setLockInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
+                autoFocus
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: "1.5px solid #3b82f6",
+                  outline: "none",
+                  color: "#f1f5f9",
+                  fontSize: 16,
+                  padding: "8px 0",
+                  boxSizing: "border-box",
+                  caretColor: "#3b82f6",
+                }}
+              />
+            </div>
+
+            {lockError && (
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#f87171",
+                  margin: "8px 0 0",
+                }}
+              >
+                {lockError}
+              </p>
+            )}
+
+            <div style={{ height: 28 }} />
+
+            {/* Submit */}
+            <button
+              onClick={handleUnlock}
+              disabled={lockLoading}
+              style={{
+                width: "100%",
+                padding: "13px",
+                background: "linear-gradient(90deg, #3b82f6, #6366f1)",
+                border: "none",
+                borderRadius: 10,
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: lockLoading ? "not-allowed" : "pointer",
+                opacity: lockLoading ? 0.7 : 1,
+                boxSizing: "border-box",
+              }}
+            >
+              {lockLoading ? "Verifying\u2026" : "Submit"}
+            </button>
+          </div>
         </div>
       )}
     </>
