@@ -15,7 +15,7 @@
   },
   "engines": {
     "npm": ">=10.0.0",
-    "node": ">=18.0.0"
+    "node": ">=20.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
@@ -45,6 +45,6 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^6.0.1"
   }
 }
